@@ -24,7 +24,7 @@ class WeatherForecastScreen: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        carousel.type = .invertedRotary
+        carousel.type = .coverFlow2
         carousel.scrollSpeed = 1.0
         controller.downLoadWeatherForecast(complete: { mappedObject in
             self.updateUI(mappedObject)
@@ -69,39 +69,48 @@ class WeatherForecastScreen: UIViewController {
 
 extension WeatherForecastScreen {
     func showAlertForTemp(msg: String) {
+        let existingType = self.type
         let alertController = UIAlertController(title: "", message: msg, preferredStyle: .alert)
         let celsius = UIAlertAction(title: "Celsius", style: .default, handler: { void in
             self.type = Temp.celsius
-            DispatchQueue.main.async {
-                self.carousel.reloadData()
+            if existingType != .celsius {
+                DispatchQueue.main.async {
+                    self.carousel.reloadData()
+                }
             }
         })
         let fahrenheit = UIAlertAction(title: "Fahrenheit", style: .default, handler: { void in
             self.type = Temp.fahrenheit
-            DispatchQueue.main.async {
-                self.carousel.reloadData()
+            if existingType != .fahrenheit {
+                DispatchQueue.main.async {
+                    self.carousel.reloadData()
+                }
             }
         })
         let kelvin = UIAlertAction(title: "Kelvin", style: .default, handler: { void in
             self.type = Temp.kelvin
-            DispatchQueue.main.async {
-                self.carousel.reloadData()
+            if existingType != .kelvin {
+                DispatchQueue.main.async {
+                    self.carousel.reloadData()
+                }
             }
         })
+        let cancel = UIAlertAction(title: "Cancel", style: .destructive, handler: nil)
         alertController.addAction(celsius)
         alertController.addAction(fahrenheit)
         alertController.addAction(kelvin)
+        alertController.addAction(cancel)
         self.present(alertController, animated: true, completion: nil)
     }
 }
 
-extension WeatherForecastScreen: iCarouselDataSource {
+extension WeatherForecastScreen: iCarouselDataSource, iCarouselDelegate {
     func numberOfItems(in carousel: iCarousel) -> Int {
         return forecastLists.count
     }
     
     func carousel(_ carousel: iCarousel, viewForItemAt index: Int, reusing view: UIView?) -> UIView {
-        let forecastview = ForecastView(frame: CGRect(x: 0, y: self.headerView.frame.maxY, width: 300, height: 300))
+        let forecastview = ForecastView(frame: CGRect(x: 0, y: 0, width: self.carousel.frame.width, height: self.carousel.frame.height))
         
         //set values in view
         forecastview.configureView(date: forecastLists[index].date, time: forecastLists[index].time, temp: forecastLists[index].temp, tempType: type, pressure: forecastLists[index].pressure, humidity: forecastLists[index].humidity, icon: forecastLists[index].icon)
